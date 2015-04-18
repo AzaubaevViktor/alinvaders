@@ -10,8 +10,8 @@ public class Main {
                 JFrame gameFrame = new JFrame();
                 gameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                 gameFrame.setVisible(true);
-                gameFrame.setSize(320, 240);
-                gameFrame.getContentPane().add(new GamePanel());
+                gameFrame.setSize(640, 480);
+                gameFrame.getContentPane().add(new Level());
 
             }
         });
