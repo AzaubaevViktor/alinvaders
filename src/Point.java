@@ -11,6 +11,11 @@ public class Point extends Point2D {
         y = p.getY();
     }
 
+    public Point(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
     @Override
     public double getX() {
         return x;

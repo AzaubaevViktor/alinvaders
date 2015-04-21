@@ -5,10 +5,11 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
+import java.util.Iterator;
 import java.util.Vector;
 
 public class LevelRender extends JPanel implements Runnable, MouseInputListener, MouseMotionListener{
-    private int fps = 25;
+    private int fps = 60;
     private double dt = 1. / fps;
 
     public long steps = 0;
@@ -20,12 +21,16 @@ public class LevelRender extends JPanel implements Runnable, MouseInputListener,
 
     private Point mouseClick = new Point();
 
-    private Level level = new Level(fps);
+    private Level level;
+
+    private Dimension screen = new Dimension();
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+
+    }
 
     public LevelRender() {
-        invaders = level.invaders;
-        bombs = level.bombs;
-
         setFocusable(true);
         addKeyListener(new KeyAdapter() {
             @Override
@@ -53,11 +58,6 @@ public class LevelRender extends JPanel implements Runnable, MouseInputListener,
         addMouseMotionListener(this);
         Thread thread = new Thread(this);
         thread.start();
-    }
-
-    @Override
-    public void mouseClicked(MouseEvent e) {
-
     }
 
     @Override
@@ -91,28 +91,48 @@ public class LevelRender extends JPanel implements Runnable, MouseInputListener,
 
     }
 
-    @Override
-    protected void paintComponent(Graphics g) {
-        int r;
+    private void drawInvaders(Graphics g) {
+        Iterator<Invader> iIt = invaders.iterator();
         Point pos;
-        g.setColor(Color.BLACK);
-        g.fillRect(0, 0, 640, 480);
+        Invader invader;
+        int r;
 
         g.setColor(Color.WHITE);
-        for (Invader invader: invaders) {
+        while (iIt.hasNext()) {
+            invader = iIt.next();
+
             pos = invader.getPos();
             r = (int) invader.radius;
-            g.fillArc(pos.X() -r/2, pos.Y() - r/2, r, r, 0, (int) (invader.life/100.*360.));
-            g.drawArc(pos.X() - r/2, pos.Y() - r/2, r, r, 0, 360);
+            g.fillArc(pos.X() -r/2, pos.Y() - r/2, r, r, 0, (int) (invader.life/invader.maxLife*360.));
+            g.drawArc(pos.X() - r / 2, pos.Y() - r / 2, r, r, 0, 360);
         }
+    }
+
+    private void drawBombs(Graphics g) {
+        Iterator<Bomb> bIt = bombs.iterator();
+        Point pos;
+        Bomb bomb;
+        int r;
 
         g.setColor(Color.GREEN);
-        for (Bomb bomb: bombs) {
+        while (bIt.hasNext()) {
+            bomb = bIt.next();
+
             pos = bomb.getPos();
             r = (int) bomb.radius;
-            g.fillArc(pos.X() - r / 2, pos.Y() - r / 2, r, r, 0, (int) (bomb.life/600.*360.));
+            g.fillArc(pos.X() - r / 2, pos.Y() - r / 2, r, r, 0, (int) (bomb.life/bomb.maxLife*360.));
             g.drawArc(pos.X() - r/2, pos.Y() - r/2, r, r, 0, 360);
         }
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        g.setColor(Color.BLACK);
+        g.fillRect(0, 0, (int) screen.getWidth(), (int) screen.getHeight());
+
+        drawInvaders(g);
+
+        drawBombs(g);
 
         g.setColor(Color.WHITE);
         g.drawString("Killed: " + level.killedInvaders +
@@ -123,6 +143,16 @@ public class LevelRender extends JPanel implements Runnable, MouseInputListener,
     @Override
     public void run() {
         try {
+
+            if (level == null) {
+                while (getSize().getHeight() == 0);
+                screen = getSize();
+                level = new Level(fps, screen);
+
+                invaders = level.invaders;
+                bombs = level.bombs;
+            }
+
             while (true) {
                 long stTime = System.nanoTime();
                 long endTime = 0;

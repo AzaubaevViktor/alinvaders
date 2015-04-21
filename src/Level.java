@@ -1,3 +1,4 @@
+import java.awt.*;
 import java.util.Iterator;
 import java.util.Vector;
 
@@ -5,6 +6,8 @@ import java.util.Vector;
  * Created by `ktulhy` on 4/21/15.
  */
 public class Level {
+    private final Dimension screen;
+
     public long level = 0;
     private int fps;
     private double dt;
@@ -25,19 +28,21 @@ public class Level {
     public long killedInvaders = 0;
     public long pwnedInvader = 0;
 
-    public Level(int fps) {
+    public Level(int fps, Dimension d) {
         this.fps = fps;
+        this.screen = d;
+
         dt = 1. / fps;
         levelChange(1);
     }
 
     public void createInvaders(long steps) {
-        invaders.add(new Invader(invSpeed));
+        invaders.add(new Invader(invSpeed, screen));
         stepPrevInvCreate = steps;
     }
 
     public void createBomb(long steps, Point mouseClick) {
-        bombs.add(new Bomb(mouseClick.X(), mouseClick.Y(), bombSpeed));
+        bombs.add(new Bomb(mouseClick, bombSpeed, screen));
 
         stepPrevBombCreate = steps;
     }
@@ -51,8 +56,6 @@ public class Level {
 
         bombCooldown = 1. / level;
         bombSpeed = 15 * level;
-
-        System.out.println(bombSpeed + " " + invSpeed);
     }
 
     public void levelUp() {
@@ -69,9 +72,13 @@ public class Level {
             killedInvaders++;
         }
 
-        if (invader.getPos().X() > 640) {
+        if (invader.getPos().X() > screen.getWidth()) {
             it.remove();
             pwnedInvader++;
+        }
+
+        if ((invader.getPos().Y() > screen.getHeight() - invader.radius / 2) || (invader.getPos().Y() < invader.radius / 2)) {
+            invader.horisontalRebound();
         }
     }
 
@@ -97,7 +104,7 @@ public class Level {
     public void logic(long steps, Point mouseClick, boolean isNeed2CreateBomb) {
 
         if (killedInvaders != 0) {
-            long newLevel = (long) (Math.log(killedInvaders / 2.) / Math.log(5.)) + 1;
+            long newLevel = (long) (Math.log(killedInvaders/10. + 3)/Math.log(2.));
             if (newLevel != level) {
                 levelChange(newLevel - level);
             }

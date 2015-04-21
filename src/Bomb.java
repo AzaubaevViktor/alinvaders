@@ -1,12 +1,15 @@
+import java.awt.*;
+
 public class Bomb extends GameObject {
     public long damage = 40;
     private double speed;
 
-    Bomb (int vx, int vy, double speed) {
-        pos.setLocation(640, 240);
-        v.setLocation(vx - 640, vy - 240);
+    Bomb (Point mouseClick, double speed, Dimension d) {
+        pos.setLocation(d.getWidth(), d.getHeight() / 2);
+        v.setLocation(mouseClick.X() - d.getWidth(), mouseClick.Y() - d.getHeight() / 2);
         v.normalize(speed);
-        life = 600;
+
+        life = maxLife = d.getWidth() + d.getHeight() / 2;
         radius = 5;
         this.speed = speed;
     }

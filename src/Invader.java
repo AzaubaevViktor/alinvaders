@@ -1,13 +1,15 @@
+import java.awt.*;
 import java.util.Random;
 
 public class Invader extends GameObject {
     private Point a = new Point();
 
-    Invader(double speed) {
+    Invader(double speed, Dimension screen) {
         radius = 10;
-        pos.setLocation(Math.random() * 10, Math.random() * 470 + radius / 2);
+        pos.setLocation(Math.random() * 10,
+                Math.random() * (screen.getHeight() - radius) + radius / 2);
         v.setLocation(speed, 0);
-        life = 100;
+        life = maxLife = 100;
     }
 
     @Override
@@ -25,7 +27,11 @@ public class Invader extends GameObject {
     }
 
     private void logic(double dt) {
-        v.rotate((Math.random() * 0.1 - 0.05) * dt);
+        v.rotate((Math.random() * 1 - 0.5) * dt);
         pos.move(v, dt);
+    }
+
+    public void horisontalRebound() {
+        v.setLocation(v.X(), -v.Y());
     }
 }
