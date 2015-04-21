@@ -61,4 +61,8 @@ public class Point extends Point2D {
         y /= l;
         y *= len;
     }
+
+    public double distance2(Point p) {
+        return (p.x - x) * (p.x - x) + (p.y - y) * (p.y - y);
+    }
 }

@@ -6,11 +6,22 @@ public class Invader extends GameObject {
     Invader() {
         pos.setLocation(Math.random() * 10, Math.random() * 470 + 5);
         v.setLocation(20, 0);
+        radius = 10;
+        life = 100;
     }
 
     @Override
     public void step(double dt) {
         logic(dt);
+    }
+
+    @Override
+    public void collisionHandler(GameObject go) {
+        Bomb bomb;
+        if (go.getClass() == Bomb.class) {
+            bomb = (Bomb) go;
+            life -= bomb.damage;
+        }
     }
 
     private void logic(double dt) {

@@ -1,172 +1,109 @@
-import javax.swing.*;
-import javax.swing.event.MouseInputListener;
-import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
+import java.util.Iterator;
 import java.util.Vector;
 
-public class Level extends JPanel implements Runnable, MouseInputListener{
-    private int mouseX = 0;
-    private int mouseY = 0;
-    private int fps = 10;
-    private double dt = 1. / fps;
+/**
+ * Created by `ktulhy` on 4/21/15.
+ */
+public class Level {
+    private long level = 0;
+    private int fps;
+    private double dt;
 
-    private int level = 1;
-    private double invCount = 0;
-    private double invCooldown = 0;
-    private Vector<Invader> invaders = new Vector<Invader>();
-    private Vector<Bomb> bombs = new Vector<Bomb>();
+    private long invCount;
+    private double invCooldown;
+
+    private double bombCooldown = 1;
+
+    public Vector<Invader> invaders = new Vector<Invader>();
+    public Vector<Bomb> bombs = new Vector<Bomb>();
+
+    private long stepPrevInvCreate = 0;
+    private long stepPrevBombCreate = 0;
 
     private long killedInvaders = 0;
-    private long steps = 0;
-    private long stepPrevInvCreate = 0;
-    private boolean isNeed2CreateBomb = false;
+    private long pwnedInvader = 0;
 
-    public Level() {
-        setFocusable(true);
-        addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyTyped(KeyEvent e) {
-                super.keyTyped(e);
-            }
-
-            @Override
-            public void keyPressed(KeyEvent e) {
-                super.keyPressed(e);
-                switch (e.getKeyCode()) {
-                    case KeyEvent.VK_LEFT:
-                        break;
-                    case KeyEvent.VK_RIGHT:
-                        break;
-                }
-            }
-
-            @Override
-            public void keyReleased(KeyEvent e) {
-                super.keyReleased(e);
-            }
-        });
-        addMouseListener(this);
-        levelChange(0);
-        Thread thread = new Thread(this);
-        thread.start();
+    public Level(int fps) {
+        this.fps = fps;
+        dt = 1. / fps;
+        levelChange(1);
     }
 
-    @Override
-    public void mouseClicked(MouseEvent e) {
-
+    public void createInvaders(long steps) {
+        System.out.println("Invader created");
+        invaders.add(new Invader());
+        stepPrevInvCreate = steps;
     }
 
-    @Override
-    public void mousePressed(MouseEvent evt) {
-        System.out.println("Press:" + evt.getPoint().x + ", " + evt.getPoint().y);
-        mouseX = evt.getX();
-        mouseY = evt.getY();
-        isNeed2CreateBomb = true;
-    }
+    public void createBomb(long steps, Point mouseClick) {
+        System.out.println("Bomb created");
+        bombs.add(new Bomb(mouseClick.X(), mouseClick.Y()));
 
-    @Override
-    public void mouseReleased(MouseEvent e) {
-
-    }
-
-    @Override
-    public void mouseEntered(MouseEvent e) {
-
-    }
-
-    @Override
-    public void mouseExited(MouseEvent e) {
-
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-        Point pos;
-        g.setColor(Color.BLACK);
-        g.fillRect(0, 0, 640, 480);
-
-        g.setColor(Color.WHITE);
-        for (Invader invader: invaders) {
-            pos = invader.getPos();
-            g.drawArc(pos.X() - 5, pos.Y() - 5, 10, 10, 0, 360);
-        }
-
-        g.setColor(Color.GREEN);
-        for (Bomb bomb: bombs) {
-            pos = bomb.getPos();
-            g.drawArc(pos.X() - 5, pos.Y() - 5, 10, 10, 0, 360);
-        }
-    }
-
-    @Override
-    public void run() {
-        try {
-            while (true) {
-                long stTime = System.nanoTime();
-                long endTime = 0;
-                long dTime = 0;
-                logic();
-                repaint();
-                steps++;
-                while (true) {
-                    endTime = System.nanoTime();
-
-                    dTime = endTime - stTime;
-                    if (dTime < dt * 100000000.) {
-                        Thread.sleep(dTime / 1000000);
-                    } else {
-                        break;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            System.out.println("wtf" + e.getMessage() + e.toString());
-        }
+        stepPrevBombCreate = steps;
     }
 
     private void levelChange(int dl) {
         level += dl;
-        invCount = (int) level + Math.sqrt(level);
-        invCooldown = (int) 3/level + 1;
+        invCount = (int) (level + Math.sqrt(level));
+        invCooldown = (int) (3. / level + 1);
     }
 
-    private void levelUp() {
+    public void levelUp() {
         levelChange(1);
     }
 
-    private void logic() {
-        if ((invaders.size() < invCount) && (steps - stepPrevInvCreate < invCooldown * fps)) {
-            System.out.println("Invader created");
-            invaders.add(new Invader());
-            stepPrevInvCreate = steps;
+    private void invaderHandler(Iterator<Invader> it) {
+        Invader invader = it.next();
+
+        invader.step(dt);
+
+        if (invader.life <= 0) {
+            it.remove();
+            killedInvaders++;
         }
 
-        if (isNeed2CreateBomb) {
-            System.out.println("Bomb created");
-            bombs.add(new Bomb(mouseX, mouseY));
-
-            isNeed2CreateBomb = false;
+        if (invader.getPos().X() > 640) {
+            it.remove();
+            pwnedInvader++;
         }
+    }
 
+    private void bombHandler(Iterator<Bomb> it) {
+        Bomb bomb = it.next();
+
+        bomb.step(dt);
+        double r = 0;
         for (Invader invader: invaders) {
-            invader.step(dt);
+            r = invader.radius + bomb.radius;
+            r *= r;
+            if (bomb.getPos().distance2(invader.getPos()) < r) {
+                invader.collisionHandler(bomb);
+                bomb.collisionHandler(invader);
+            }
         }
 
-        for (Bomb bomb: bombs) {
-            bomb.step(dt);
+        if (bomb.life <= 0) {
+            it.remove();
         }
     }
 
-    @Override
-    public void mouseDragged(MouseEvent e) {
+    public void logic(long steps, Point mouseClick, boolean isNeed2CreateBomb) {
+        if ((invaders.size() < invCount) && (steps - stepPrevInvCreate > invCooldown * fps)) {
+            this.createInvaders(steps);
+        }
 
-    }
+        if (isNeed2CreateBomb && (steps - stepPrevBombCreate > bombCooldown * fps)) {
+            createBomb(steps, mouseClick);
+        }
 
-    @Override
-    public void mouseMoved(MouseEvent e) {
+        Iterator<Invader> iIt = invaders.iterator();
+        while (iIt.hasNext()) {
+            invaderHandler(iIt);
+        }
 
+        Iterator<Bomb> bIt = bombs.iterator();
+        while (bIt.hasNext()) {
+            bombHandler(bIt);
+        }
     }
 }
