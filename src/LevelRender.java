@@ -8,7 +8,7 @@ import java.awt.event.MouseMotionListener;
 import java.util.Vector;
 
 public class LevelRender extends JPanel implements Runnable, MouseInputListener, MouseMotionListener{
-    private int fps = 10;
+    private int fps = 25;
     private double dt = 1. / fps;
 
     public long steps = 0;
@@ -62,7 +62,6 @@ public class LevelRender extends JPanel implements Runnable, MouseInputListener,
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        System.out.println("Drag");
         mouseClick.setLocation(e.getX(), e.getY());
     }
 
@@ -73,7 +72,6 @@ public class LevelRender extends JPanel implements Runnable, MouseInputListener,
 
     @Override
     public void mousePressed(MouseEvent evt) {
-        System.out.println("Press:" + evt.getPoint().x + ", " + evt.getPoint().y);
         mouseClick.setLocation(evt.getX(), evt.getY());
         isNeed2CreateBomb = true;
     }
@@ -112,9 +110,14 @@ public class LevelRender extends JPanel implements Runnable, MouseInputListener,
         for (Bomb bomb: bombs) {
             pos = bomb.getPos();
             r = (int) bomb.radius;
-            g.fillArc(pos.X() - r / 2, pos.Y() - r / 2, r, r, 0, (int) (bomb.life/20.*360.));
+            g.fillArc(pos.X() - r / 2, pos.Y() - r / 2, r, r, 0, (int) (bomb.life/600.*360.));
             g.drawArc(pos.X() - r/2, pos.Y() - r/2, r, r, 0, 360);
         }
+
+        g.setColor(Color.WHITE);
+        g.drawString("Killed: " + level.killedInvaders +
+                ", Pwned: " + level.pwnedInvader +
+                ", Level: " + level.level, 0, 20);
     }
 
     @Override

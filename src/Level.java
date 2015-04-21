@@ -5,14 +5,16 @@ import java.util.Vector;
  * Created by `ktulhy` on 4/21/15.
  */
 public class Level {
-    private long level = 0;
+    public long level = 0;
     private int fps;
     private double dt;
 
     private long invCount;
     private double invCooldown;
+    private double invSpeed;
 
-    private double bombCooldown = 1;
+    private double bombCooldown;
+    private double bombSpeed;
 
     public Vector<Invader> invaders = new Vector<Invader>();
     public Vector<Bomb> bombs = new Vector<Bomb>();
@@ -20,8 +22,8 @@ public class Level {
     private long stepPrevInvCreate = 0;
     private long stepPrevBombCreate = 0;
 
-    private long killedInvaders = 0;
-    private long pwnedInvader = 0;
+    public long killedInvaders = 0;
+    public long pwnedInvader = 0;
 
     public Level(int fps) {
         this.fps = fps;
@@ -30,22 +32,27 @@ public class Level {
     }
 
     public void createInvaders(long steps) {
-        System.out.println("Invader created");
-        invaders.add(new Invader());
+        invaders.add(new Invader(invSpeed));
         stepPrevInvCreate = steps;
     }
 
     public void createBomb(long steps, Point mouseClick) {
-        System.out.println("Bomb created");
-        bombs.add(new Bomb(mouseClick.X(), mouseClick.Y()));
+        bombs.add(new Bomb(mouseClick.X(), mouseClick.Y(), bombSpeed));
 
         stepPrevBombCreate = steps;
     }
 
-    private void levelChange(int dl) {
+    private void levelChange(long dl) {
         level += dl;
+
         invCount = (int) (level + Math.sqrt(level));
         invCooldown = (int) (3. / level + 1);
+        invSpeed = 10 * Math.pow(2, level - 1);
+
+        bombCooldown = 1. / level;
+        bombSpeed = 15 * level;
+
+        System.out.println(bombSpeed + " " + invSpeed);
     }
 
     public void levelUp() {
@@ -88,6 +95,16 @@ public class Level {
     }
 
     public void logic(long steps, Point mouseClick, boolean isNeed2CreateBomb) {
+
+        if (killedInvaders != 0) {
+            long newLevel = (long) (Math.log(killedInvaders / 2.) / Math.log(5.)) + 1;
+            if (newLevel != level) {
+                levelChange(newLevel - level);
+            }
+        } else {
+            level = 1;
+        };
+
         if ((invaders.size() < invCount) && (steps - stepPrevInvCreate > invCooldown * fps)) {
             this.createInvaders(steps);
         }

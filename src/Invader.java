@@ -3,10 +3,10 @@ import java.util.Random;
 public class Invader extends GameObject {
     private Point a = new Point();
 
-    Invader() {
-        pos.setLocation(Math.random() * 10, Math.random() * 470 + 5);
-        v.setLocation(20, 0);
+    Invader(double speed) {
         radius = 10;
+        pos.setLocation(Math.random() * 10, Math.random() * 470 + radius / 2);
+        v.setLocation(speed, 0);
         life = 100;
     }
 
