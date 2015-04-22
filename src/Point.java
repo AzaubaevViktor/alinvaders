@@ -74,4 +74,12 @@ public class Point extends Point2D {
     public double R() {
         return Math.sqrt(x*x + y*y);
     }
+
+    public double Phi() {
+        return Math.atan2(y, x);
+    }
+
+    public Point pBetweenVector(Point p) {
+        return new Point((int) (p.x - x), (int) (p.y - y));
+    }
 }

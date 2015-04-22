@@ -1,6 +1,6 @@
 import java.awt.*;
-import java.util.Iterator;
-import java.util.Vector;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Created by `ktulhy` on 4/21/15.
@@ -22,6 +22,9 @@ public class Level {
     public Vector<Invader> invaders = new Vector<Invader>();
     public Vector<Bomb> bombs = new Vector<Bomb>();
 
+    public HashMap<Double, AI> AIStorage = new HashMap<Double, AI>();
+    private double countSum = 0;
+
     private long stepPrevInvCreate = 0;
     private long stepPrevBombCreate = 0;
 
@@ -36,8 +39,64 @@ public class Level {
         levelChange(1);
     }
 
+    private void removeOldAI() {
+
+        while (AIStorage.size() > 50) {
+
+            double minCount = Double.MAX_VALUE;
+
+            AI badAI = null;
+
+            for (Double count: AIStorage.keySet()) {
+
+                if (count < minCount) {
+                    minCount = count;
+                }
+            }
+
+            System.out.println(minCount);
+
+            AIStorage.remove(minCount);
+        }
+    }
+
+    public AI getParentAI() {
+        long size = AIStorage.size();
+        if (size == 0) {
+            return null;
+        }
+
+        removeOldAI();
+
+        countSum = 1;
+        for (Double count: AIStorage.keySet()) {
+            countSum += count;
+        }
+
+        double rnd = (Math.random() * countSum);
+
+        Double aiC = null;
+        for (Double count: AIStorage.keySet()) {
+            rnd -= count;
+            if (rnd <= 0) {
+                aiC = count;
+                break;
+            }
+        }
+
+        return AIStorage.get(aiC);
+    }
+
     public void createInvaders(long steps) {
-        invaders.add(new Invader(invSpeed, screen));
+        Invader inv;
+
+        if (Math.random() < 0.1) {
+            inv = new Invader(invSpeed, screen, null);
+        } else {
+            inv = new Invader(invSpeed, screen, getParentAI());
+        }
+
+        invaders.add(inv);
         stepPrevInvCreate = steps;
     }
 
@@ -66,33 +125,47 @@ public class Level {
         Invader invader = it.next();
 
         invader.step(dt);
+        invader.bad(dt);
 
         if (invader.life <= 0) {
+            invader.bad(100);
+            AIStorage.put(invader.ai.count, invader.ai);
             it.remove();
             killedInvaders++;
         }
 
         if (invader.getPos().X() > screen.getWidth()) {
+            invader.good(100);
+            AIStorage.put(invader.ai.count, invader.ai);
+
             it.remove();
             pwnedInvader++;
         }
 
-        if ((invader.getPos().Y() > screen.getHeight() - invader.radius / 2) || (invader.getPos().Y() < invader.radius / 2)) {
-            invader.horisontalRebound();
-        }
+        invader.horisontalReboundCheck((int) invader.radius / 2,
+                (int) (screen.getHeight() - invader.radius / 2),
+                (int) invader.radius / 2);
     }
 
     private void bombHandler(Iterator<Bomb> it) {
         Bomb bomb = it.next();
 
         bomb.step(dt);
-        double r = 0;
+        double r2 = 0;
+        double dist;
+
         for (Invader invader: invaders) {
-            r = invader.radius + bomb.radius;
-            r *= r;
-            if (bomb.getPos().distance2(invader.getPos()) < r) {
+            r2 = invader.radius + bomb.radius;
+            r2 *= r2;
+            dist = bomb.getPos().distance2(invader.getPos());
+            if (dist < r2) {
                 invader.collisionHandler(bomb);
                 bomb.collisionHandler(invader);
+                invader.bad((int) bomb.damage);
+            }
+
+            if (dist < invader.vision * invader.vision) {
+                invader.addVisibleObject(bomb, Math.sqrt(dist));
             }
         }
 

@@ -1,7 +1,7 @@
 import java.awt.*;
 
 public class Bomb extends GameObject {
-    public long damage = 40;
+    public long damage = 15;
     private double speed;
 
     Bomb (Point mouseClick, double speed, Dimension d) {

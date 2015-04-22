@@ -172,7 +172,7 @@ public class LevelRender extends JPanel implements Runnable, MouseInputListener,
                 }
             }
         } catch (Exception e) {
-            System.out.println("wtf" + e.getMessage() + e.toString());
+            System.out.println("wtf: " + e.getMessage() + e.toString());
         }
     }
 
