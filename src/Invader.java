@@ -1,6 +1,4 @@
 import java.awt.*;
-import java.awt.geom.Arc2D;
-import java.util.Random;
 
 public class Invader extends GameObject {
     private Point a = new Point();
