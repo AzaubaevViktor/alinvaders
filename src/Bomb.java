@@ -5,8 +5,8 @@ public class Bomb extends GameObject {
     private double speed;
 
     Bomb (Point mouseClick, double speed, Dimension d) {
-        pos.setLocation(d.getWidth(), d.getHeight() / 2);
-        v.setLocation(mouseClick.X() - d.getWidth(), mouseClick.Y() - d.getHeight() / 2);
+        pos.setLocation(d.getWidth() * 0.95, d.getHeight() / 2);
+        v.setLocation(mouseClick.X() - d.getWidth() * 0.95, mouseClick.Y() - d.getHeight() / 2);
         v.normalize(speed);
 
         life = maxLife = d.getWidth() + d.getHeight() / 2;

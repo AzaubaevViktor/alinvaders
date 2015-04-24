@@ -13,18 +13,18 @@ public class AI {
     private double mass1[][] = new double[firstLayer][secondLayer];
     private double mass2[][] = new double[secondLayer][thirdLayer];
 
-    private double mutationFactor = 0.1;
+    private double mutationFactor = 0.05;
 
     public AI() {
         for (int i = 0; i < firstLayer; i++) {
             for (int j = 0; j < secondLayer; j++) {
-                mass1[i][j] = Math.random() * 2 - 1;
+                mass1[i][j] = Math.random() * 0.1 - 0.05;
             }
         }
 
         for (int i = 0; i < secondLayer; i++) {
             for (int j = 0; j < thirdLayer; j++) {
-                mass2[i][j] = Math.random() * 2 - 1;
+                mass2[i][j] = Math.random() * 0.1 - 0.05;
             }
         }
     }
@@ -64,7 +64,7 @@ public class AI {
         }
 
         for (i = 0; i < secondLayer; i++) {
-            secondLayerOut[i] = f(secondLayerInp[i]);
+            secondLayerOut[i] = f(secondLayerInp[i] / firstLayer);
         }
 
         for (i = 0; i < secondLayer; i++) {
@@ -73,8 +73,8 @@ public class AI {
             }
         }
 
-        res = thirdLayerOut[1];
-        return thirdLayerOut[0];
+        res = thirdLayerOut[1] / secondLayer;
+        return thirdLayerOut[0] / secondLayer;
     }
 
 }

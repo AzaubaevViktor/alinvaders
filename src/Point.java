@@ -32,6 +32,10 @@ public class Point extends Point2D {
         this.y = y;
     }
 
+    public void verticalSymmetry() {
+        this.x = - this.x;
+    }
+
     public void move(Point p, double dt) {
         x += p.x * dt;
         y += p.y * dt;
@@ -77,6 +81,12 @@ public class Point extends Point2D {
 
     public double Phi() {
         return Math.atan2(y, x);
+    }
+
+    public void setPhi(double phi) {
+        double r = this.R();
+        x = Math.cos(phi) * r;
+        y = Math.sin(phi) * r;
     }
 
     public Point pBetweenVector(Point p) {

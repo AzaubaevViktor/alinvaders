@@ -126,12 +126,17 @@ public class Level {
 
         invader.step(dt);
         invader.bad(dt);
+        invader.horisontalReboundCheck((int) invader.radius / 2,
+                (int) (screen.getHeight() - invader.radius / 2),
+                (int) invader.radius / 2);
 
         if (invader.life <= 0) {
             invader.bad(100);
-            AIStorage.put(invader.ai.count, invader.ai);
+            if (!invader.isRebound) {
+                AIStorage.put(invader.ai.count, invader.ai);
+                killedInvaders++;
+            }
             it.remove();
-            killedInvaders++;
         }
 
         if (invader.getPos().X() > screen.getWidth()) {
@@ -142,9 +147,7 @@ public class Level {
             pwnedInvader++;
         }
 
-        invader.horisontalReboundCheck((int) invader.radius / 2,
-                (int) (screen.getHeight() - invader.radius / 2),
-                (int) invader.radius / 2);
+
     }
 
     private void bombHandler(Iterator<Bomb> it) {
