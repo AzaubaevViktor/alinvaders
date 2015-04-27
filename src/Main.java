@@ -4,6 +4,7 @@ public class Main {
 
     public static void main(String[] args) {
         System.out.println(Math.atan2(-.1, -1)/ Math.PI);
+        System.out.println(Bullet.class.isAssignableFrom(BulletFromGun.class));
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {

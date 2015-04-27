@@ -11,7 +11,12 @@ public class Point extends Point2D {
         y = p.getY();
     }
 
-    public Point(int x, int y) {
+    Point(Point p) {
+        x = p.x;
+        y = p.y;
+    }
+
+    public Point(double x, double y) {
         this.x = x;
         this.y = y;
     }

@@ -10,13 +10,13 @@ public class Invader extends GameObject {
     public boolean isRebound = false;
 
 
-    Invader(double speed, Dimension screen, AI parentAI) {
+    Invader(double speed, double life, Dimension screen, AI parentAI) {
         radius = 10;
         vision = (int) (radius + speed * 1.5);
-        pos.setLocation(Math.random() * 10,
+        pos.setLocation(radius + 1,
                 Math.random() * (screen.getHeight() - radius) + radius / 2);
         v.setLocation(speed, 0);
-        life = maxLife = 100;
+        this.life = maxLife = life;
 
         if (null != parentAI) {
             ai = new AI(parentAI);
@@ -28,6 +28,7 @@ public class Invader extends GameObject {
     @Override
     public void step(double dt) {
         logic(dt);
+        bad(dt);
     }
 
     public void good(double val) {
@@ -40,10 +41,18 @@ public class Invader extends GameObject {
 
     @Override
     public void collisionHandler(GameObject go) {
-        Bomb bomb;
-        if (go.getClass() == Bomb.class) {
-            bomb = (Bomb) go;
-            life -= bomb.damage;
+
+        try {
+            Bullet bullet = (Bullet) go;
+            life -= bullet.damage;
+            bad(bullet.damage);
+        } catch (ClassCastException ignored) {}
+
+
+        if (go.getClass() == Explosion.class) {
+            Explosion explosion = (Explosion) go;
+            life -= explosion.damage;
+            bad(explosion.damage);
         }
     }
 

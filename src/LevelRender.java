@@ -5,8 +5,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Vector;
 
 public class LevelRender extends JPanel implements Runnable, MouseInputListener, MouseMotionListener{
     private int fps = 60;
@@ -14,15 +14,17 @@ public class LevelRender extends JPanel implements Runnable, MouseInputListener,
 
     public long steps = 0;
 
-    private Vector<Invader> invaders;
-    private Vector<Bomb> bombs;
+    private ArrayList<Invader> invaders;
+    private ArrayList<Bullet> bullets;
+    private ArrayList<Bomb> bombs;
+    private ArrayList<Explosion> explosions;
 
-    private boolean isNeed2CreateBomb = false;
+    private boolean isShotBombs = false;
+    private boolean isShotBullets = false;
 
     private Point mouseClick = new Point();
 
     private Level level;
-
     private Dimension screen = new Dimension();
 
     @Override
@@ -73,12 +75,24 @@ public class LevelRender extends JPanel implements Runnable, MouseInputListener,
     @Override
     public void mousePressed(MouseEvent evt) {
         mouseClick.setLocation(evt.getX(), evt.getY());
-        isNeed2CreateBomb = true;
+        if (evt.getButton() == MouseEvent.BUTTON1) {
+            isShotBombs = true;
+        }
+
+        if (evt.getButton() == MouseEvent.BUTTON3) {
+            isShotBullets = true;
+        }
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        isNeed2CreateBomb = false;
+        if (e.getButton() == MouseEvent.BUTTON1) {
+            isShotBombs = false;
+        }
+
+        if (e.getButton() == MouseEvent.BUTTON3) {
+            isShotBullets = false;
+        }
     }
 
     @Override
@@ -108,31 +122,59 @@ public class LevelRender extends JPanel implements Runnable, MouseInputListener,
         }
     }
 
-    private void drawBombs(Graphics g) {
-        Iterator<Bomb> bIt = bombs.iterator();
+    private void drawBulletsNBombs(Graphics g) {
+        Iterator<Bullet> bIt = bullets.iterator();
+        Iterator<Bomb> bmbIt = bombs.iterator();
+        Iterator<Explosion> explIt = explosions.iterator();
         Point pos;
+        Bullet bullet;
         Bomb bomb;
+        Explosion expl;
         int r;
 
         g.setColor(Color.GREEN);
         while (bIt.hasNext()) {
-            bomb = bIt.next();
+            bullet = bIt.next();
+
+            pos = bullet.getPos();
+            r = (int) bullet.radius;
+            g.fillArc(pos.X() - r / 2, pos.Y() - r / 2, r, r, 0, (int) (bullet.life/ bullet.maxLife*360.));
+            g.drawArc(pos.X() - r/2, pos.Y() - r/2, r, r, 0, 360);
+        }
+
+        g.setColor(Color.RED);
+        while (bmbIt.hasNext()) {
+            bomb = bmbIt.next();
 
             pos = bomb.getPos();
             r = (int) bomb.radius;
-            g.fillArc(pos.X() - r / 2, pos.Y() - r / 2, r, r, 0, (int) (bomb.life/bomb.maxLife*360.));
+            g.fillArc(pos.X() - r / 2, pos.Y() - r / 2, r, r, 0, (int) (bomb.life/ bomb.maxLife*360.));
             g.drawArc(pos.X() - r/2, pos.Y() - r/2, r, r, 0, 360);
+        }
+
+        g.setColor(Color.RED);
+        while (explIt.hasNext()) {
+            expl = explIt.next();
+
+            pos = expl.getPos();
+            r = (int) expl.radius;
+            g.fillArc(pos.X() - r / 2, pos.Y() - r / 2, r, r, 0, 360);
         }
     }
 
     @Override
     protected void paintComponent(Graphics g) {
+
+        ((Graphics2D) g).setRenderingHint(
+                RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON);
+
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, (int) screen.getWidth(), (int) screen.getHeight());
 
         drawInvaders(g);
 
-        drawBombs(g);
+        drawBulletsNBombs(g);
 
         g.setColor(Color.WHITE);
         g.drawString("Killed: " + level.killedInvaders +
@@ -150,14 +192,16 @@ public class LevelRender extends JPanel implements Runnable, MouseInputListener,
                 level = new Level(fps, screen);
 
                 invaders = level.invaders;
+                bullets = level.bullets;
                 bombs = level.bombs;
+                explosions = level.explosions;
             }
 
             while (true) {
                 long stTime = System.nanoTime();
                 long endTime = 0;
                 long dTime = 0;
-                level.logic(steps, mouseClick, isNeed2CreateBomb);
+                level.logic(steps, mouseClick, isShotBombs, isShotBullets);
                 repaint();
                 steps++;
                 while (true) {
