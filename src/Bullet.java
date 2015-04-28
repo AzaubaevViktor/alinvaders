@@ -14,7 +14,6 @@ public class Bullet extends GameObject {
         } catch (ClassCastException e) {
             if (go.getClass() != Explosion.class) {
                 life = 0;
-                System.out.println("Killed by " + go.getClass());
             }
         }
     }

@@ -1,9 +1,6 @@
 import java.awt.*;
 import java.util.*;
 
-/**
- * Created by `ktulhy` on 4/21/15.
- */
 public class Level {
     private final Dimension screen;
 
@@ -20,6 +17,8 @@ public class Level {
 
     private double bombCooldown;
     private double bombSpeed;
+
+    public final Object objectsLock = new Object();
 
     public ArrayList<Invader> invaders = new ArrayList<Invader>();
     public ArrayList<Bullet> bullets = new ArrayList<Bullet>();
@@ -102,32 +101,40 @@ public class Level {
             inv = new Invader(invSpeed, invLife, screen, getParentAI());
         }
 
-        invaders.add(inv);
+        synchronized (objectsLock) {
+            invaders.add(inv);
+        }
+
         stepPrevInvCreate = steps;
     }
 
     public void createBullet(long steps, Point mouseClick) {
-        bullets.add(new BulletFromGun(mouseClick, bulletSpeed, bulletDamage, screen));
+        synchronized (objectsLock) {
+            bullets.add(new BulletFromGun(mouseClick, bulletSpeed, bulletDamage, screen));
+        }
 
         stepPrevBulletCreate = steps;
     }
 
     public void createBomb(long steps, Point mouseClick) {
-        bombs.add(new Bomb(mouseClick, bombSpeed, bombDamage, screen));
+        synchronized (objectsLock) {
+            bombs.add(new Bomb(mouseClick, bombSpeed, bombDamage, screen));
+        }
 
         stepPrevBombCreate = steps;
     }
 
     public void createExplosion(Point p, double damage) {
-        explosions.add(new Explosion(p, damage * 0.1));
-        for (int i = 0; i < damage * 0.9 / shrapnelDamage; i++) {
-            Point v = new Point(0, bulletSpeed);
-            v.setPhi(Math.random() * Math.PI * 2 - Math.PI);
-            Point pos = new Point(p);
-            pos.move(v, 1);
+        synchronized (objectsLock) {
+            explosions.add(new Explosion(p, damage * 0.1));
+            for (int i = 0; i < damage * 0.9 / shrapnelDamage; i++) {
+                Point v = new Point(0, bulletSpeed);
+                v.setPhi(Math.random() * Math.PI * 2 - Math.PI);
+                Point pos = new Point(p);
+                pos.move(v, 1);
 
-            bullets.add(new Shrapnel(pos, v, shrapnelDamage, 4, 2));
-            System.out.println("Shrapnell " + v.Phi() / Math.PI);
+                bullets.add(new Shrapnel(pos, v, shrapnelDamage, 4, 2));
+            }
         }
 
     }
@@ -137,16 +144,16 @@ public class Level {
 
         invCount = (int) (level + Math.sqrt(level));
         invCooldown = (int) (3. / level + 1);
-        invSpeed = 10 * Math.pow(1.5, level - 1);
-        invLife = 100 + 50 * level;
+        invSpeed = 10 * Math.pow(1.1, level - 1);
+        invLife = 50 + 20 * level;
 
         bulletCooldown = 1. / level;
         bulletSpeed = 15 * level;
         bulletDamage = 15 + 2 * level;
 
-        bombCooldown = 3. / level;
+        bombCooldown = 5. / level;
         bombSpeed = 10 * level;
-        bombDamage = 50 + 10 * level;
+        bombDamage = 100 + 10 * level;
 
         shrapnelDamage = bulletDamage;
     }
@@ -185,25 +192,28 @@ public class Level {
                 explIt.remove();
             }
         }
+
     }
 
     private void invaderHandler(GameObject go) {
         if (go.getClass() != Invader.class) {
             return;
         }
+        synchronized (objectsLock) {
 
-        Invader invader = (Invader) go;
-        invader.horisontalReboundCheck((int) invader.radius / 2,
-                (int) (screen.getHeight() - invader.radius / 2),
-                (int) invader.radius / 2);
+            Invader invader = (Invader) go;
+            invader.horisontalReboundCheck((int) invader.radius / 2,
+                    (int) (screen.getHeight() - invader.radius / 2),
+                    (int) invader.radius / 2);
 
 
-        if (invader.getPos().X() > screen.getWidth()) {
-            invader.life = 0;
-            invader.good(100);
-            AIStorage.put(invader.ai.count, invader.ai);
+            if (invader.getPos().X() > screen.getWidth()) {
+                invader.life = 0;
+                invader.good(100);
+                AIStorage.put(invader.ai.count, invader.ai);
 
-            pwnedInvader++;
+                pwnedInvader++;
+            }
         }
     }
 
@@ -223,8 +233,7 @@ public class Level {
 
                 distBetween2 = obj1.getPos().distance2(obj2.getPos());
 
-                dist2 = obj1.radius + obj2.radius;
-                dist2 *= dist2;
+                dist2 = obj1.radius * obj1.radius + obj2.radius * obj2.radius;
 
                 if (distBetween2 <= dist2) {
 
@@ -260,7 +269,7 @@ public class Level {
             }
         } else {
             level = 1;
-        };
+        }
 
         if ((invaders.size() < invCount) && (steps - stepPrevInvCreate > invCooldown * fps)) {
             createInvaders(steps);
@@ -276,11 +285,13 @@ public class Level {
 
         ArrayList<GameObject> objs = new ArrayList<GameObject>();
 
-        objs.addAll(bombs);
-        objs.addAll(invaders);
-        objs.addAll(bullets);
-        objs.addAll(explosions);
-        handle(objs);
-        removeGameObjects();
+        synchronized (objectsLock) {
+            objs.addAll(bombs);
+            objs.addAll(invaders);
+            objs.addAll(bullets);
+            objs.addAll(explosions);
+            handle(objs);
+            removeGameObjects();
+        }
     }
 }

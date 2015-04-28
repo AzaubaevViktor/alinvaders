@@ -15,7 +15,6 @@ public class Explosion extends GameObject {
         life -= dt;
         radius = Math.sqrt(2 * (1 - life) / Math.PI) * maxDamage * 5;
         damage = (integr * (- Math.pow((1 - life) + dt, 1.5)) + Math.pow((1 - life), 1.5));
-        System.out.println(damage);
     }
 
     @Override

@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 public class LevelRender extends JPanel implements Runnable, MouseInputListener, MouseMotionListener{
-    private int fps = 60;
+    private int fps = 45;
     private double dt = 1. / fps;
 
     public long steps = 0;
@@ -18,6 +18,8 @@ public class LevelRender extends JPanel implements Runnable, MouseInputListener,
     private ArrayList<Bullet> bullets;
     private ArrayList<Bomb> bombs;
     private ArrayList<Explosion> explosions;
+
+    private Object objectsLock;
 
     private boolean isShotBombs = false;
     private boolean isShotBullets = false;
@@ -34,28 +36,6 @@ public class LevelRender extends JPanel implements Runnable, MouseInputListener,
 
     public LevelRender() {
         setFocusable(true);
-        addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyTyped(KeyEvent e) {
-                super.keyTyped(e);
-            }
-
-            @Override
-            public void keyPressed(KeyEvent e) {
-                super.keyPressed(e);
-                switch (e.getKeyCode()) {
-                    case KeyEvent.VK_LEFT:
-                        break;
-                    case KeyEvent.VK_RIGHT:
-                        break;
-                }
-            }
-
-            @Override
-            public void keyReleased(KeyEvent e) {
-                super.keyReleased(e);
-            }
-        });
         addMouseListener(this);
         addMouseMotionListener(this);
         Thread thread = new Thread(this);
@@ -68,9 +48,7 @@ public class LevelRender extends JPanel implements Runnable, MouseInputListener,
     }
 
     @Override
-    public void mouseMoved(MouseEvent e) {
-
-    }
+    public void mouseMoved(MouseEvent e) {}
 
     @Override
     public void mousePressed(MouseEvent evt) {
@@ -96,14 +74,10 @@ public class LevelRender extends JPanel implements Runnable, MouseInputListener,
     }
 
     @Override
-    public void mouseEntered(MouseEvent e) {
-
-    }
+    public void mouseEntered(MouseEvent e) {}
 
     @Override
-    public void mouseExited(MouseEvent e) {
-
-    }
+    public void mouseExited(MouseEvent e) {}
 
     private void drawInvaders(Graphics g) {
         Iterator<Invader> iIt = invaders.iterator();
@@ -172,9 +146,11 @@ public class LevelRender extends JPanel implements Runnable, MouseInputListener,
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, (int) screen.getWidth(), (int) screen.getHeight());
 
-        drawInvaders(g);
+        synchronized (objectsLock) {
+            drawInvaders(g);
 
-        drawBulletsNBombs(g);
+            drawBulletsNBombs(g);
+        }
 
         g.setColor(Color.WHITE);
         g.drawString("Killed: " + level.killedInvaders +
@@ -195,6 +171,7 @@ public class LevelRender extends JPanel implements Runnable, MouseInputListener,
                 bullets = level.bullets;
                 bombs = level.bombs;
                 explosions = level.explosions;
+                objectsLock = level.objectsLock;
             }
 
             while (true) {
